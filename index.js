@@ -12,6 +12,7 @@ require("dotenv").config();
 app.post("/apiserver/mailsender", (req, res) => {
   const name = req.body.name;
   const email = req.body.email;
+  const type = req.body.type;
   const subject = req.body.subject;
   const text = req.body.text;
 
@@ -23,7 +24,7 @@ app.post("/apiserver/mailsender", (req, res) => {
   const data = {
     from: `${name} <postmaster@${process.env.MAILGUN_DOMAIN}>`,
     to: process.env.MAIL_TO,
-    subject: subject || "無題",
+    subject: `[${type || "unknown"}] ${subject || "無題"}`,
     text: `email: ${email}
 ${text}
 `
