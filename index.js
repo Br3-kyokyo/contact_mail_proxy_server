@@ -1,39 +1,47 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var nodemailer = require("nodemailer");
-
-var receiverEmailAddress = "br3.kyokyo@gmail.com";
-
-var app = express();
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const mailgun = require("mailgun-js");
 
 app.use(bodyParser.json());
+app.use(cors());
 
-app.post("/", function(req, res) {
-  let name = req.body.name;
-  let email = req.body.email;
-  let text = req.body.text;
+require("dotenv").config();
 
-  console.log("recieve");
+app.post("/apiserver/mailsender", (req, res) => {
+  const name = req.body.name;
+  const email = req.body.email;
+  const subject = req.body.subject;
+  const text = req.body.text;
 
-  var message = {
-    from: email,
-    to: receiverEmailAddress,
-    subject: "okyaku-ios contact",
-    text: text
+  const mg = mailgun({
+    apiKey: process.env.MAILGUN_APIKEY,
+    domain: process.env.MAILGUN_DOMAIN
+  });
+
+  const data = {
+    from: `${name} <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+    to: process.env.MAIL_TO,
+    subject: subject || "無題",
+    text: `email: ${email}
+${text}
+`
   };
 
-  var smtp = nodemailer.createTransport({
-    host: "localhost",
-    port: 25
-  });
-
-  smtp.sendMail(message, function(error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
-  });
+  // eslint-disable-next-line handle-callback-err
+  mg.messages()
+    .send(data)
+    .then(body => {
+      console.log(body);
+      res.send("送信されました！");
+    })
+    .catch(err => {
+      console.error(err);
+      res.send(
+        "エラーが発生しました！お急ぎの場合br3.kyokyo@gmail.comへご連絡ください。"
+      );
+    });
 });
 
-app.listen(4000);
+app.listen(6000);
